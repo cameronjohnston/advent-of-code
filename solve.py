@@ -9,7 +9,7 @@ from solvers import AOC_SOLVERS
 
 
 def main():
-    arg_parser = argparse.ArgumentParser()
+    arg_parser = argparse.ArgumentParser(description='Solve ALL the puzzles, get ALL the stars!')
     arg_parser.add_argument('--year', '-y', type=int, help='Optional specify year', default=0)
     arg_parser.add_argument('--day', '-d', type=int, help='Optional specify day', default=0)
 
@@ -35,8 +35,10 @@ def main():
         print(f'Found no solver yet for {year} day {day}!')
         return
 
-    solver = AOC_SOLVERS[year][day]
-    solver.solve()
+    solvers = AOC_SOLVERS[year][day]
+    for i, solver in enumerate(solvers):
+        print(f'Solving {year} day {day}...')
+        solver.solve()
 
 
 

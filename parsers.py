@@ -40,11 +40,15 @@ class InputFileFinder:
     def get(self):
         return os.path.join(self.input_path, str(self.year), f'{self.day}.{self.ext}')
 
+@dataclass
 class AOCInputParser:
+    year: int = 0
+    day: int = 0
+
     # Default parse: return the file lines as a list of str's
     def parse(self, input_file: Union[str,None]=None):
         if input_file is None:
-            input_file = InputFileFinder().get()
+            input_file = InputFileFinder(year=self.year, day=self.day).get()
         f = open(input_file, 'r')
         lines = f.readlines()
         return lines
@@ -52,4 +56,5 @@ class AOCInputParser:
 class DummyAOCInputParser(AOCInputParser):
     def parse(self, input_file: Union[str,None]=None):
         return ['Dummy input']
+
 
