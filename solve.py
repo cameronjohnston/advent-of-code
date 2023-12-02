@@ -35,10 +35,8 @@ def main():
         print(f'Found no solver yet for {year} day {day}!')
         return
 
-    solvers = AOC_SOLVERS[year][day]
-    for i, solver in enumerate(solvers):
-        print(f'Solving {year} day {day}...')
-        solver.solve()
+    solver = AOC_SOLVERS[year][day]
+    solver.solve()
 
 
 

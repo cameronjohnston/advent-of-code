@@ -1,7 +1,11 @@
 
 from dataclasses import dataclass
 import os
+import re
 from typing import Union
+
+from exceptions import ColourNotRecognizedException
+from models import RGBGame
 
 @dataclass
 class InputFileFinder:
@@ -52,6 +56,39 @@ class AOCInputParser:
         f = open(input_file, 'r')
         lines = f.readlines()
         return lines
+
+class AOCRGBGameParser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        games = []
+        for l in lines:
+            game_with_id, all_games = l.split(':')
+
+            # Get ID
+            id = int(re.match(r'Game ([\d]+)', game_with_id).groups()[0])
+
+            # Get drawings
+            drawings = []
+            for game_str in all_games.split(';'):
+                colour_counts = {}
+                game_rgb_strs = game_str.split(',')
+                for rgb_str in game_rgb_strs:
+                    rgb_str = rgb_str.strip()
+                    num, colour = re.match(r'([\d]+) ([\w]+)', rgb_str).groups()
+                    if colour in RGBGame.colour_strings():
+                        colour_counts[colour] = int(num)
+                    else:
+                        raise ColourNotRecognizedException(colour=colour)
+
+                # Now we have a colour_counts dict representing a drawing. Append to the drawings:
+                drawings.append(colour_counts)
+
+            # Create the game and append
+            game = RGBGame(id=id, drawings=drawings)
+            games.append(game)
+
+        return games
+
 
 class DummyAOCInputParser(AOCInputParser):
     def parse(self, input_file: Union[str,None]=None):

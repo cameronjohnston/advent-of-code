@@ -3,7 +3,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from models import Digit
-from parsers import AOCInputParser, DummyAOCInputParser
+from parsers import (AOCInputParser, DummyAOCInputParser
+    , AOCRGBGameParser
+                     )
 from timer import timeit
 
 @dataclass
@@ -11,7 +13,12 @@ class AOCSolver:
     input_parser: AOCInputParser
 
     def solve(self):
-        parsed = self.input_parser.parse()
+        try:
+            parsed = self.input_parser.parse()
+        except Exception as e:
+            print(f'Found {e.__class__.__name__} during parsing: {e}')
+            return
+
         if hasattr(self, 'solve_part1'):
             print('Solving part 1...')
             part1_sol = self.solve_part1(parsed)
@@ -61,13 +68,35 @@ class AOC2023Day1Solver(AOCSolver):
         return self.sum_two_digit_numbers(digits_in_lines)
 
 
+class AOC2023Day2Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        total = 0
+        for game in parsed:
+            if game.is_possible({
+                'red': 12, 'green': 13, 'blue': 14
+            }):
+                total += game.id
+        return total
+
+    @timeit
+    def solve_part2(self, parsed):
+        total = 0
+        for game in parsed:
+            multiplied = 1
+            for v in (game.min_balls_possible()).values():
+                multiplied *= v
+            # print(f'ID {game.id} multiplied is {multiplied}')
+            total += multiplied
+        return total
+
 AOC_SOLVERS = {
     2022: {
-        32: [StraightThruAOCSolver(AOCInputParser(2022, 32))],
-        33: [StraightThruAOCSolver(AOCInputParser(2022, 32)),
-             StraightThruAOCSolver(AOCInputParser(2022, 32))],
+        32: StraightThruAOCSolver(AOCInputParser(2022, 32)),
+        33: StraightThruAOCSolver(AOCInputParser(2022, 32)),
     },
     2023: {
-        1: [AOC2023Day1Solver(AOCInputParser(2023, 1))]
+        1: AOC2023Day1Solver(AOCInputParser(2023, 1)),
+        2: AOC2023Day2Solver(AOCRGBGameParser(2023, 2))
     }
 }

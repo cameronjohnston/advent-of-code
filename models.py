@@ -1,5 +1,35 @@
 
 from dataclasses import dataclass
+from typing import List
+
+
+@dataclass
+class RGBGame:
+    id: int
+    drawings: List[dict]
+
+    def is_possible(self, max_counts: dict):
+        for colour in self.__class__.colour_strings():
+            for colour_counts in self.drawings:
+                if colour in colour_counts and colour in max_counts:
+                    if colour_counts[colour] > max_counts[colour]:
+                        return False
+        return True
+
+    def min_balls_possible(self):
+        min_for_colours = {}
+        for colour in self.__class__.colour_strings():
+            this_colour_counts = [
+                d[colour] for d in self.drawings if colour in d
+            ]
+            min_for_colour = max(this_colour_counts)
+            min_for_colours[colour] = min_for_colour
+        return min_for_colours
+
+    @classmethod
+    def colour_strings(cls):
+        return 'red', 'green', 'blue'
+
 
 @dataclass
 class Digit:
