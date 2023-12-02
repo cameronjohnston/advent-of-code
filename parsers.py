@@ -69,11 +69,15 @@ class AOCRGBGameParser(AOCInputParser):
 
             # Get drawings
             drawings = []
+            # Each drawing will be separated by a semicolon
             for game_str in all_games.split(';'):
                 colour_counts = {}
-                game_rgb_strs = game_str.split(',')
-                for rgb_str in game_rgb_strs:
-                    rgb_str = rgb_str.strip()
+
+                # Each colour drawn in that drawing will be separated by a comma
+                for rgb_str in game_str.split(','):
+                    rgb_str = rgb_str.strip()  # remove leading spaces
+
+                    # Each colour drawn will be indicated as <num> <colour>
                     num, colour = re.match(r'([\d]+) ([\w]+)', rgb_str).groups()
                     if colour in RGBGame.colour_strings():
                         colour_counts[colour] = int(num)

@@ -23,6 +23,7 @@ class AOCSolver:
             print('Solving part 1...')
             part1_sol = self.solve_part1(parsed)
             print(f'Part 1 solution: {part1_sol}')
+
         if hasattr(self, 'solve_part2'):
             print('Solving part 2...')
             part2_sol = self.solve_part2(parsed)
