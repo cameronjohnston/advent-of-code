@@ -4,7 +4,37 @@ from typing import List
 
 
 @dataclass
-class RGBGame:
+class EnginePartCandidate:
+    part_num: int
+    row_num: int
+    start_pos: int
+
+    def __post_init__(self):
+        self.length = len(str(self.part_num))
+        self.end_pos = self.start_pos + self.length
+
+    def is_part(self, symbols):
+        for s in symbols:
+            if self.row_num-1 <= s.row_num <= self.row_num+1:
+                if self.start_pos-1 <= s.start_pos <= self.end_pos+1:
+                    print(f'TRUE: {self.part_num} on row {self.row_num}')
+                    return True
+        print(f'FALSE: {self.part_num} on row {self.row_num}')
+        return False
+
+@dataclass
+class EngineSchematicSymbol:
+    symbol: str
+    row_num: int
+    start_pos: int
+
+    def __post_init__(self):
+        self.length = len(str(self.symbol))
+        self.end_pos = self.start_pos + self.length
+
+
+@dataclass
+class RGBGame:  # 2023 day 2
     id: int
     drawings: List[dict]
 
@@ -32,7 +62,7 @@ class RGBGame:
 
 
 @dataclass
-class Digit:
+class Digit:  # 2023 day 1
     text: str
     value: int
 

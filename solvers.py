@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from models import Digit
 from parsers import (AOCInputParser, DummyAOCInputParser
     , AOCRGBGameParser
+    , AOCEngineSchematicParser
                      )
 from timer import timeit
 
@@ -91,6 +92,19 @@ class AOC2023Day2Solver(AOCSolver):
             total += multiplied
         return total
 
+
+class AOC2023Day3Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        candidates, symbols = parsed
+        total = 0
+        for c in candidates:
+            if c.is_part(symbols):
+                total += c.part_num
+        return total
+
+
+
 AOC_SOLVERS = {
     2022: {
         32: StraightThruAOCSolver(AOCInputParser(2022, 32)),
@@ -98,6 +112,7 @@ AOC_SOLVERS = {
     },
     2023: {
         1: AOC2023Day1Solver(AOCInputParser(2023, 1)),
-        2: AOC2023Day2Solver(AOCRGBGameParser(2023, 2))
+        2: AOC2023Day2Solver(AOCRGBGameParser(2023, 2)),
+        3: AOC2023Day3Solver(AOCEngineSchematicParser(2023, 3)),
     }
 }

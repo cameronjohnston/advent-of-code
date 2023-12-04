@@ -5,7 +5,7 @@ import re
 from typing import Union
 
 from exceptions import ColourNotRecognizedException
-from models import RGBGame
+from models import RGBGame, EnginePartCandidate, EngineSchematicSymbol
 
 @dataclass
 class InputFileFinder:
@@ -92,6 +92,44 @@ class AOCRGBGameParser(AOCInputParser):
             games.append(game)
 
         return games
+
+
+class AOCEngineSchematicParser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        candidates = []
+        symbols = []
+        for i, l in enumerate(lines):
+
+            # Find numbers and create an EnginePartCandidate for each
+            numbers_matches = re.finditer(r'(\d+)', l)
+            for m in numbers_matches:
+                epc = EnginePartCandidate(part_num=int(m.group()), row_num=i, start_pos=m.start())
+                candidates.append(epc)
+
+            # Find symbols and create an EngineSchematicSymbol for each
+            # symbols_matches = re.finditer(r'([!@#$%^&*/\-\+=])', l)
+            symbols_matches = re.finditer(r'(\D)', l)
+            for m in symbols_matches:
+                if m.group() not in ('\n', '.'):
+                    # If we reached here, we have a non-digit, non-decimal, non-end-line. AKA a symbol
+
+                    # Check if it's a negative sign part of a number ... if so, this isn't considered a symbol
+                    # if m.group() in ('+', '-') and l[m.start() + 1].isdigit():
+                    #     continue
+
+                    ess = EngineSchematicSymbol(symbol=m.group(), row_num=i, start_pos=m.start())
+                    symbols.append(ess)
+
+            # Below was a non-regex attempt ... produced the same result
+            # for j, c in enumerate(l):
+            #     if not c.isdigit() and c not in ('.', '\n'):
+            #         ess = EngineSchematicSymbol(symbol=c, row_num=i, start_pos=j)
+            #         symbols.append(ess)
+
+        # print(candidates)
+        # print(symbols)
+        return candidates, symbols
 
 
 class DummyAOCInputParser(AOCInputParser):
