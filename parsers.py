@@ -5,7 +5,7 @@ import re
 from typing import Union
 
 from exceptions import ColourNotRecognizedException
-from models import RGBGame, EnginePartCandidate, EngineSchematicSymbol
+from models import RGBGame, EnginePartCandidate, EngineSchematicSymbol, ScratchCard, AlmanacMap, AlmanacMapRange
 
 @dataclass
 class InputFileFinder:
@@ -130,6 +130,63 @@ class AOCEngineSchematicParser(AOCInputParser):
         # print(candidates)
         # print(symbols)
         return candidates, symbols
+
+
+class AOCScratchCardParser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        cards = []
+        for l in lines:
+            card_with_id, all_nums_str = l.split(':')
+            print(card_with_id)
+            id = int(re.match(r'Card[ ]+([\d]+)', card_with_id).groups()[0])
+            winning_nums_str, my_nums_str = all_nums_str.split('|')
+            winning_nums = [int(num) for num in winning_nums_str.split(' ') if len(num)]
+            my_nums = [int(num) for num in my_nums_str.split(' ') if len(num)]
+            card = ScratchCard(id, winning_nums, my_nums)
+            cards.append(card)
+        return cards
+
+
+class AOCAlmanacParser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        almanac_maps = []
+        for l in lines:
+            # Expected to be first line
+            if 'seeds:' in l:
+                print(f'Parsing line {l}')
+                seeds_str = l.split(':')[1]
+                print(f'Parsing seeds: {seeds_str}')
+                seeds = [int(s) for s in seeds_str.split(' ') if len(s)]
+                source, destination = None, None
+
+            # Blank lines: add new AlmanacMap, then skip this line
+            if len(l) < 2:
+                if source is not None:
+                    almanac_map = AlmanacMap(source, destination, map_ranges)
+                    almanac_maps.append(almanac_map)
+                source = destination = None
+                continue
+
+            # Search for matches to new map header
+            map_match = re.match(r'([a-zA-Z]+)-to-([a-zA-Z]+) map:', l)
+            if map_match:
+                source, destination = map_match.groups()
+                map_ranges = []
+
+            values_match = re.match(r'([\d]+) ([\d]+) ([\d]+)', l)
+            if values_match:
+                destination_start, source_start, length = tuple(int(x) for x in values_match.groups())
+                map_ranges.append(AlmanacMapRange(source_start, destination_start, length))
+
+        # After all lines: need to add the final AlmanacMap
+        almanac_map = AlmanacMap(source, destination, map_ranges)
+        almanac_maps.append(almanac_map)
+
+        # Done parsing. Return seeds and AlmanacMaps
+        print(f'Done parsing. {seeds}; {almanac_maps}')
+        return seeds, almanac_maps
 
 
 class DummyAOCInputParser(AOCInputParser):

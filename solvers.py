@@ -1,11 +1,14 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import time
 
 from models import Digit
 from parsers import (AOCInputParser, DummyAOCInputParser
     , AOCRGBGameParser
     , AOCEngineSchematicParser
+    , AOCScratchCardParser
+    , AOCAlmanacParser
                      )
 from timer import timeit
 
@@ -103,6 +106,86 @@ class AOC2023Day3Solver(AOCSolver):
                 total += c.part_num
         return total
 
+    @timeit
+    def solve_part2(self, parsed):
+        candidates, symbols = parsed
+        total = 0
+        for s in symbols:
+            if s.symbol != '*':
+                print(f'Skipping {s.symbol}')
+                continue
+            adj_cnt = 0
+            multiply_result = 1
+            for c in candidates:
+                if c.is_adjacent(s):
+                    adj_cnt += 1
+                    multiply_result *= c.part_num
+            if adj_cnt == 2:
+                print(f'FOUND: {s.symbol} {s.row_num}:{s.start_pos}')
+                total += multiply_result
+            else:
+                print(f'FALSE: {s.symbol} {s.row_num}:{s.start_pos}')
+        return total
+
+
+class AOC2023Day4Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        total = 0
+        for card in parsed:
+            winning_nums_cnt = card.count_matches()
+            if winning_nums_cnt:
+                total += pow(2, winning_nums_cnt-1)
+        return total
+
+    @timeit
+    def solve_part2(self, parsed):
+        won_cards = []
+        print(f'Starting with {len(parsed)} cards')
+        for i, card in enumerate(parsed):
+            winning_nums_cnt = card.count_matches()
+            print(f'{card.id} has {winning_nums_cnt} wins')
+            if winning_nums_cnt:
+                copies_of_this = len([c for c in won_cards if c.id == card.id])
+                for j in range(i+1, i+1+winning_nums_cnt):
+                    print(f'Adding {copies_of_this+1} cards of {parsed[j].id}')
+                    for _ in range(copies_of_this+1):
+                        won_cards.append(parsed[j])
+
+        return len(parsed) + len(won_cards)
+
+
+class AOC2023Day5Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        seeds, almanac_maps = parsed
+        print(almanac_maps)
+        source, destination = 'seed', None
+        values = {
+            'seed': seeds
+        }
+        while destination != 'location':
+            # Find the relevant map
+            almanac_map = [m for m in almanac_maps if m.source == source]
+            if len(almanac_map):
+                time.sleep(0.1)
+                almanac_map = almanac_map[0]
+                destination = almanac_map.destination
+                print(f'Found {source} {destination}')
+
+                # Initialize empty array for values in destination
+                values[destination] = []
+
+                # Loop thru and populate destination values
+                for k in values[source]:
+                    # get the destination value
+                    destination_value = almanac_map.get_destination_value(k)
+                    values[destination].append(destination_value)
+
+                source = destination
+
+        print(values)
+        return min(values['location'])
 
 
 AOC_SOLVERS = {
@@ -114,5 +197,7 @@ AOC_SOLVERS = {
         1: AOC2023Day1Solver(AOCInputParser(2023, 1)),
         2: AOC2023Day2Solver(AOCRGBGameParser(2023, 2)),
         3: AOC2023Day3Solver(AOCEngineSchematicParser(2023, 3)),
+        4: AOC2023Day4Solver(AOCScratchCardParser(2023, 4)),
+        5: AOC2023Day5Solver(AOCAlmanacParser(2023, 5))
     }
 }
