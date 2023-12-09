@@ -5,7 +5,9 @@ import re
 from typing import Union
 
 from exceptions import ColourNotRecognizedException
-from models import RGBGame, EnginePartCandidate, EngineSchematicSymbol, ScratchCard, AlmanacMap, AlmanacMapRange
+from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
+    , ScratchCard, AlmanacMap, AlmanacMapRange, Range
+)
 
 @dataclass
 class InputFileFinder:
@@ -159,6 +161,8 @@ class AOCAlmanacParser(AOCInputParser):
                 seeds_str = l.split(':')[1]
                 print(f'Parsing seeds: {seeds_str}')
                 seeds = [int(s) for s in seeds_str.split(' ') if len(s)]
+                seed_range_pairs = [(seeds[i], seeds[i+1]) for i in range(0, len(seeds), 2)]
+                seed_ranges = [Range(p[0], p[0]+p[1]-1) for p in seed_range_pairs]
                 source, destination = None, None
 
             # Blank lines: add new AlmanacMap, then skip this line
@@ -178,15 +182,16 @@ class AOCAlmanacParser(AOCInputParser):
             values_match = re.match(r'([\d]+) ([\d]+) ([\d]+)', l)
             if values_match:
                 destination_start, source_start, length = tuple(int(x) for x in values_match.groups())
-                map_ranges.append(AlmanacMapRange(source_start, destination_start, length))
+                map_ranges.append(AlmanacMapRange(source_start, source_start+length-1, destination_start-source_start))
 
         # After all lines: need to add the final AlmanacMap
         almanac_map = AlmanacMap(source, destination, map_ranges)
         almanac_maps.append(almanac_map)
 
         # Done parsing. Return seeds and AlmanacMaps
-        print(f'Done parsing. {seeds}; {almanac_maps}')
-        return seeds, almanac_maps
+        # ... and seed_ranges, because hooray for pt2 requiring different parsing!
+        print(f'Done parsing. {seeds}; {almanac_maps}; {seed_ranges}')
+        return seeds, almanac_maps, seed_ranges
 
 
 class DummyAOCInputParser(AOCInputParser):

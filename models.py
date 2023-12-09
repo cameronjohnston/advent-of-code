@@ -101,7 +101,71 @@ class ScratchCard:
 
 
 @dataclass
-class AlmanacMapRange:
+class Range:
+    start: int
+    end: int
+
+    def __add__(self, other):
+        # Check if other is None. If so... there is no overlap, so return None:
+        if other is None:
+            return None
+        # Returns the range of values which are in BOTH self AND other
+        res_start = max(self.start, other.start)
+        res_end = min(self.end, other.end)
+        return Range(res_start, res_end) if res_end >= res_start else None
+
+    def __sub__(self, other):
+        # Returns the range of values in self which are NOT in other
+
+        # Check if other is None. If so... there is nothing to subtract, so return self:
+        if other is None:
+            return self
+
+        # Get overlap, for use further below
+        overlap = self.__add__(other)
+
+        # 0. overlap is None -> there is nothing to subtract, so return self
+        if overlap is None:
+            return self
+
+        # 1. overlap is in the middle of self -> need to return 2 Ranges!
+        if overlap.start > self.start and overlap.end < self.end:
+            return Range(self.start, overlap.start - 1), Range(overlap.end + 1, self.end)
+
+        # 2. overlap is the whole self -> return None
+        if overlap.start == self.start and overlap.end == self.end:
+            return None
+
+        # 3. overlap is at the start of self -> return part after overlap
+        if overlap.start == self.start and overlap.end < self.end:
+            return Range(overlap.end+1, self.end)
+
+        # 4. overlap is at the end of self -> return part before overlap
+        if overlap.start > self.start and overlap.end == self.end:
+            return Range(self.start, overlap.start-1)
+
+
+@dataclass
+class AlmanacMapRange(Range):
+    destination_offset: int  # Difference between the source value and destination value
+
+    def get_destination_value(self, source_value):
+        return (source_value + self.destination_offset
+                if self.start <= source_value <= self.end
+                else None
+                )
+
+    def __add__(self, other):
+        range = Range(self.start, self.end)
+        overlap_range = range.__add__(other)
+        if overlap_range is not None:
+            return AlmanacMapRange(overlap_range.start, overlap_range.end, self.destination_offset)
+        else:
+            return None
+
+
+@dataclass
+class AlmanacMapRange_old:
     source_start: int
     destination_start: int
     length: int

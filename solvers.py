@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import time
 
-from models import Digit
+from models import Digit, Range, AlmanacMapRange
 from parsers import (AOCInputParser, DummyAOCInputParser
     , AOCRGBGameParser
     , AOCEngineSchematicParser
@@ -156,19 +156,21 @@ class AOC2023Day4Solver(AOCSolver):
 
 
 class AOC2023Day5Solver(AOCSolver):
+    final_destination = 'location'
+
     @timeit
     def solve_part1(self, parsed):
-        seeds, almanac_maps = parsed
+        seeds, almanac_maps = parsed[0], parsed[1]
         print(almanac_maps)
         source, destination = 'seed', None
         values = {
             'seed': seeds
         }
-        while destination != 'location':
+        while destination != self.final_destination:
             # Find the relevant map
             almanac_map = [m for m in almanac_maps if m.source == source]
             if len(almanac_map):
-                time.sleep(0.1)
+                # time.sleep(0.1)
                 almanac_map = almanac_map[0]
                 destination = almanac_map.destination
                 print(f'Found {source} {destination}')
@@ -186,6 +188,78 @@ class AOC2023Day5Solver(AOCSolver):
 
         print(values)
         return min(values['location'])
+
+    @timeit
+    def solve_part2(self, parsed):
+        seed_ranges, almanac_maps = parsed[2], parsed[1]
+        source, destination = 'seed', None
+        ranges = {
+            'seed': seed_ranges
+        }
+
+        while destination != self.final_destination:
+            # Find the relevant map
+            almanac_map = [m for m in almanac_maps if m.source == source]
+            if len(almanac_map):
+                # time.sleep(0.1)
+                almanac_map = almanac_map[0]
+                destination = almanac_map.destination
+                print(f'Found {source} {destination}')
+                print(f'{source} ranges: {ranges[source]}')
+                print(f'{source}-{destination} ranges: {almanac_map.ranges}')
+
+                # Initialize empty array for ranges in destination
+                destination_ranges = []
+                ranges[destination] = []
+
+                # Loop thru and populate destination values
+                for sr in ranges[source]:
+
+                    # Initialize - we will continually subtract from this until using it after the below loop
+                    sr_orphans = [Range(sr.start, sr.end)]
+                    # Loop thru almanac map ranges, and find the destination ranges
+                    for amr in almanac_map.ranges:
+                        # get the destination range
+                        print(f'Adding {amr} + {sr}')
+                        destination_range = amr + sr
+                        if destination_range is not None:
+                            print(f'Appending {destination} range {destination_range}')
+                            destination_ranges.append(destination_range)
+
+                        # Loop thru and get ranges which are now "orphaned", i.e. unmapped
+                        print(f'Subtracting {sr_orphans} - {destination_range}')
+                        sr_orphans_res = []
+                        for sro in sr_orphans:
+                            print(f'Subtracting {sro} - {destination_range}')
+                            sub_res = sro - destination_range
+                            if sub_res is None:
+                                continue
+                            elif isinstance(sub_res, tuple):
+                                sr_orphans_res.extend(sub_res)
+                            elif isinstance(sub_res, Range):
+                                sr_orphans_res.append(sub_res)
+                        # sr_orphans = [sro - destination_range for sro in sr_orphans]
+                        print(f'Subtraction res: {sr_orphans_res}')
+                        sr_orphans = sr_orphans_res.copy()
+
+                    # Now sr_orphans contains any source range values which did not map to a destination value.
+                    # In this case, we should map them to their same value:
+                    print(f'{source}-{destination} orphans: {sr_orphans_res}')
+                    destination_ranges.extend([
+                        AlmanacMapRange(sro.start, sro.end, 0)
+                        for sro in sr_orphans_res if sro is not None
+                    ])
+
+                # Complete the step: assign destination -> source; assign incremented values
+                source = destination
+                new_source_ranges = [Range(amr.start+amr.destination_offset, amr.end+amr.destination_offset)
+                                     for amr in destination_ranges]
+                ranges[destination] = new_source_ranges
+
+        print(ranges)
+        final_dest_range_starts = [r.start for r in ranges[self.final_destination]]
+        return min(final_dest_range_starts)
+
 
 
 AOC_SOLVERS = {
