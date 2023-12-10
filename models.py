@@ -192,3 +192,147 @@ class AlmanacMap:
 class AlmanacSeed:
     start: int
     end: int
+
+
+@dataclass
+class BoatRace:
+    time_ms: int
+    record_mm: int
+
+    def unique_record_breaks(self):
+        delay_ms = 1
+        halfway = self.time_ms // 2 + self.time_ms % 2
+        while delay_ms <= halfway:
+            if delay_ms * (self.time_ms - delay_ms) > self.record_mm:
+                break  # No need to continue checking
+            # If we reached here, we did not break the record -> increment and continue
+            delay_ms += 1
+
+        # Now the delay_ms will indicate the minimum delay which results in a record break
+        # Find the count based on this
+        print(f'halfway: {halfway}')
+        res = (halfway - delay_ms) * 2
+        if not self.time_ms % 2:  # Even number -> need to add one
+            res += 1
+        print(f'{self.time_ms}ms record of {self.record_mm}mm can be broken {res} times')
+        return res
+
+
+@dataclass
+class PokerHand:
+    cards_str: str  # 1 char per card
+    bid: int = 0
+
+    def __post_init__(self):
+        # Assign the type and cards
+        self.type_ = self.get_type()
+        self.cards = self.get_cards()
+
+    def get_counts(self):
+        relevant_cards = self.get_cards()
+        counts = {}
+        while len(relevant_cards):
+            card = relevant_cards[0]
+            count = relevant_cards.count(card)
+            counts[card] = count
+            relevant_cards = [c for c in relevant_cards if c != card]
+
+        return counts
+
+    def get_type(self):
+        counts = self.get_counts()
+
+        # Now we have all the counts. Determine type and return.
+        if len([k for k in counts if counts[k] == 5]):
+            return 'five-of-a-kind'
+        elif len([k for k in counts if counts[k] == 4]):
+            return 'four-of-a-kind'
+        elif len([k for k in counts if counts[k] == 3]):
+            if len([k for k in counts if counts[k] == 2]):
+                return 'full-house'
+            else:
+                return 'three-of-a-kind'
+        elif len([k for k in counts if counts[k] == 2]) == 2:
+            return 'two-pair'
+        elif len([k for k in counts if counts[k] == 2]) == 1:
+            return 'one-pair'
+        else:
+            return 'high-card'
+
+    def get_cards(self):
+        return [PlayingCard(c) for c in self.cards_str]
+
+    def __gt__(self, other):
+        # Determine whether self is the superior poker hand
+        self_loc = self.types_ordered().index(self.type_)
+        other_loc = other.types_ordered().index(other.type_)
+
+        if self_loc < other_loc:
+            return True
+        elif self_loc > other_loc:
+            return False
+        else:
+            for i in range(len(self.cards)):
+                if self.cards[i] > other.cards[i]:
+                    return True
+                elif self.cards[i] < other.cards[i]:
+                    return False
+            return False  # Should only reach here if the hands are identical
+
+    @classmethod
+    def types_ordered(cls):
+        return ['five-of-a-kind', 'four-of-a-kind', 'full-house'
+                , 'three-of-a-kind', 'two-pair', 'one-pair', 'high-card']
+
+class PokerHandWithJackAsJoker(PokerHand):
+
+    def get_cards(self):
+        return [(PlayingCard('joker') if c == 'J' else PlayingCard(c))
+                for c in self.cards_str]
+
+    def get_type(self):
+        joker_card = PlayingCard('joker')
+        joker_cnt = self.get_cards().count(joker_card)
+        if not joker_cnt:
+            return super().get_type()
+
+        # If we reached here, there are joker(s) among us ...
+        jokerless_cards_str = self.cards_str.replace('J', '')  # [c for c in self.cards_str if c != 'J']
+        jokerless_hand = PokerHand(jokerless_cards_str)  # don't care about bid for this
+
+        # Loop through counts of each card.
+        # The optimal joker usage will be to assign them to that with the highest count
+        most_frequent_cnt, most_frequent_card = 0, None
+        for card, count in jokerless_hand.get_counts().items():
+            if count > most_frequent_cnt:
+                most_frequent_cnt, most_frequent_card = count, card
+
+        # Now replace the jokers with this most frequent card
+        if most_frequent_card is not None:
+            joker_substituted_str = self.cards_str.replace('J', most_frequent_card.value_str)
+            return PokerHand(joker_substituted_str).get_type()
+        else:
+            # 5 jokers in a hand!!! Make it the optimal hand of 5 aces:
+            return PokerHand('AAAAA').get_type()
+
+@dataclass
+class PlayingCard:
+    value_str: str  # should be only 1 char, unless it's a joker
+
+    def __post_init__(self):
+        if self.value_str.isdigit():
+            self.value = int(self.value_str)
+        else:
+            self.value = self.str_values()[self.value_str]
+
+    def __gt__(self, other):
+        return self.value > other.value
+
+    def __hash__(self):
+        return hash(self.value_str)
+
+    @classmethod
+    def str_values(cls):
+        return {'joker': 1, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+
+

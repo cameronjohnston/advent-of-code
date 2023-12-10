@@ -6,7 +6,8 @@ from typing import Union
 
 from exceptions import ColourNotRecognizedException
 from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
-    , ScratchCard, AlmanacMap, AlmanacMapRange, Range
+    , ScratchCard, AlmanacMap, AlmanacMapRange, Range, BoatRace
+    , PokerHand, PokerHandWithJackAsJoker
 )
 
 @dataclass
@@ -192,6 +193,48 @@ class AOCAlmanacParser(AOCInputParser):
         # ... and seed_ranges, because hooray for pt2 requiring different parsing!
         print(f'Done parsing. {seeds}; {almanac_maps}; {seed_ranges}')
         return seeds, almanac_maps, seed_ranges
+
+
+class AOCBoatRaceParser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        races = []
+        for l in lines:
+            parts = l.split(':')
+            print(f'Found {parts}')
+            if parts[0] == 'Time':
+                times = parts[1].split()
+            elif parts[0] == 'Distance':
+                distances = parts[1].split()
+
+        # Now we should have times and distances
+        print(f'{times}; {distances}')
+        concatenated_times = concatenated_distances = ''
+        for i in range(len(times)):
+            race = BoatRace(int(times[i]), int(distances[i]))
+            races.append(race)
+            concatenated_times += times[i]
+            concatenated_distances += distances[i]
+
+        return races, BoatRace(int(concatenated_times), int(concatenated_distances))
+
+
+class AOCPokerHandParser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        hands = []
+        hands_with_jokers = []
+        for l in lines:
+            cards_str, bid_str = l.split(' ')
+            hand = PokerHand(cards_str, int(bid_str))
+            hands.append(hand)
+            print(f'About to create PokerHandWithJackAsJoker from {cards_str}')
+            hand_with_jokers = PokerHandWithJackAsJoker(cards_str, int(bid_str))
+            print(f'Appending {hand_with_jokers}')
+            hands_with_jokers.append(hand_with_jokers)
+
+        print(f'===== Done parsing')
+        return hands, hands_with_jokers
 
 
 class DummyAOCInputParser(AOCInputParser):

@@ -2,13 +2,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import time
+import traceback
 
 from models import Digit, Range, AlmanacMapRange
-from parsers import (AOCInputParser, DummyAOCInputParser
-    , AOCRGBGameParser
-    , AOCEngineSchematicParser
-    , AOCScratchCardParser
-    , AOCAlmanacParser
+from parsers import (AOCInputParser, DummyAOCInputParser, AOCRGBGameParser
+    , AOCEngineSchematicParser, AOCScratchCardParser, AOCAlmanacParser
+    , AOCBoatRaceParser, AOCPokerHandParser
                      )
 from timer import timeit
 
@@ -21,6 +20,7 @@ class AOCSolver:
             parsed = self.input_parser.parse()
         except Exception as e:
             print(f'Found {e.__class__.__name__} during parsing: {e}')
+            traceback.print_exception(e)
             return
 
         if hasattr(self, 'solve_part1'):
@@ -261,6 +261,53 @@ class AOC2023Day5Solver(AOCSolver):
         return min(final_dest_range_starts)
 
 
+class AOC2023Day6Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        # Initialize
+        total = 1
+        for race in parsed[0]:
+            total *= race.unique_record_breaks()
+
+        return total
+
+    @timeit
+    def solve_part2(self, parsed):
+        return parsed[1].unique_record_breaks()
+
+
+class AOC2023Day7Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        total = 0
+
+        # Sort the parsed poker hands. Weakest hand will then be at the start.
+        hands = parsed[0]
+        hands.sort()
+
+        # Now loop through and add the bid * rank to the total
+        # Since list is zero-indexed ... rank will be the location + 1
+        for i, hand in enumerate(hands):
+            total += hand.bid * (i+1)
+
+        return total
+
+    @timeit
+    def solve_part2(self, parsed):
+        total = 0
+
+        # Sort the parsed poker hands, with jokers. Weakest hand will then be at the start.
+        hands = parsed[1]
+        print(f'Sorting {hands}')
+        hands.sort()
+        print(f'Sorted {hands}')
+
+        # Now loop through and add the bid * rank to the total
+        # Since list is zero-indexed ... rank will be the location + 1
+        for i, hand in enumerate(hands):
+            total += hand.bid * (i+1)
+
+        return total
 
 AOC_SOLVERS = {
     2022: {
@@ -272,6 +319,8 @@ AOC_SOLVERS = {
         2: AOC2023Day2Solver(AOCRGBGameParser(2023, 2)),
         3: AOC2023Day3Solver(AOCEngineSchematicParser(2023, 3)),
         4: AOC2023Day4Solver(AOCScratchCardParser(2023, 4)),
-        5: AOC2023Day5Solver(AOCAlmanacParser(2023, 5))
+        5: AOC2023Day5Solver(AOCAlmanacParser(2023, 5)),
+        6: AOC2023Day6Solver(AOCBoatRaceParser(2023, 6)),
+        7: AOC2023Day7Solver(AOCPokerHandParser(2023, 7)),
     }
 }
