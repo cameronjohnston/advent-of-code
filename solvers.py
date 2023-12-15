@@ -4,11 +4,12 @@ from dataclasses import dataclass
 import time
 import traceback
 
-from models import Digit, Range, AlmanacMapRange
+from models import Digit, Range, AlmanacMapRange, AsciiHashChar
 from parsers import (AOCInputParser, DummyAOCInputParser, AOCRGBGameParser
     , AOCEngineSchematicParser, AOCScratchCardParser, AOCAlmanacParser
-    , AOCBoatRaceParser, AOCPokerHandParser
-                     )
+    , AOCBoatRaceParser, AOCPokerHandParser, AOCLRNodeNetworkParser
+    , AOCCommaSeparatedParser
+)
 from timer import timeit
 
 @dataclass
@@ -309,6 +310,85 @@ class AOC2023Day7Solver(AOCSolver):
 
         return total
 
+
+class AOC2023Day8Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        return None
+        lr_pattern, nodes = parsed[0], parsed[1]
+        curr_node, move_cnt = 'AAA', 0  # nodes[first_node_name], 0
+        nodes_started_at = {}
+        while curr_node != 'ZZZ':
+            nodes_started_at[curr_node] = 1
+            for c in lr_pattern:
+                next_node = nodes[curr_node][c]
+                curr_node = next_node
+                move_cnt += 1
+                if curr_node == 'ZZZ':
+                    break
+
+        return move_cnt
+
+    @timeit
+    def solve_part2(self, parsed):
+        lr_pattern, nodes = parsed[0], parsed[1]
+        starting_nodes = [n for n in nodes if n[-1] == 'A']
+        ending_nodes = {n:[] for n in nodes if n[-1] == 'Z'}
+        curr_node_names = starting_nodes
+        print(f'Starting with {curr_node_names}')
+
+        move_cnt = 0
+        while len(curr_node_names):
+            for i, c in enumerate(lr_pattern):
+                move_cnt += 1
+                # time.sleep(2)
+                next_node_names = []  # init to empty - will fill this below
+
+                # Loop thru currently occupied nodes. Find the next node. Append to next nodes.
+                for node in curr_node_names:
+                    next_node_names.append(nodes[node][c])
+
+                # Remove those ending in Z - no longer relevant
+                not_ending_in_z = [n for n in next_node_names if n[-1] != 'Z']
+                ending_in_z = [n for n in next_node_names if n[-1] == 'Z']
+                for e in ending_in_z:
+                    if i not in ending_nodes[e]:
+                        ending_nodes[e].append(i)
+                # print(f'Ending nodes: {ending_nodes}')
+
+                curr_node_names = next_node_names
+                if not move_cnt % 1000000:
+                    print(f'{move_cnt}: occupying {curr_node_names}')
+                if not len(not_ending_in_z):
+                    break  # Done!
+            # The following else-continue-break means
+            # the outer while loop will break when the for loop breaks:
+            else:
+                continue
+            break
+
+            print(f'{move_cnt}: occupying {curr_node_names}')
+
+        return move_cnt
+
+
+class AOC2023Day15Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        print(f'parsed: {parsed}')
+        total = 0
+        for s in parsed:
+            print(f's: {s}')
+            val = 0
+            for c in s:
+                print(f'c: {c}')
+                hash_char = AsciiHashChar(val, c)
+                val = hash_char.get_result_value()
+            total += val
+
+        return total
+
+
 AOC_SOLVERS = {
     2022: {
         32: StraightThruAOCSolver(AOCInputParser(2022, 32)),
@@ -322,5 +402,7 @@ AOC_SOLVERS = {
         5: AOC2023Day5Solver(AOCAlmanacParser(2023, 5)),
         6: AOC2023Day6Solver(AOCBoatRaceParser(2023, 6)),
         7: AOC2023Day7Solver(AOCPokerHandParser(2023, 7)),
+        8: AOC2023Day8Solver(AOCLRNodeNetworkParser(2023, 8)),
+        15: AOC2023Day15Solver(AOCCommaSeparatedParser(2023, 15)),
     }
 }

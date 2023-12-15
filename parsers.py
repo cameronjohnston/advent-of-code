@@ -7,7 +7,7 @@ from typing import Union
 from exceptions import ColourNotRecognizedException
 from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
     , ScratchCard, AlmanacMap, AlmanacMapRange, Range, BoatRace
-    , PokerHand, PokerHandWithJackAsJoker
+    , PokerHand, PokerHandWithJackAsJoker, LRMapNode
 )
 
 @dataclass
@@ -235,6 +235,38 @@ class AOCPokerHandParser(AOCInputParser):
 
         print(f'===== Done parsing')
         return hands, hands_with_jokers
+
+
+class AOCLRNodeNetworkParser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        nodes, first_node_name = {}, None
+        for l in lines:
+            if len(l) < 2:
+                continue
+            if '=' not in l:
+                lr_pattern = l[:-1]  # to remove the \n at the end
+            else:
+                name, to_left, to_right = re.match(r'([0-9A-Z]+) = \(([0-9A-Z]+), ([0-9A-Z]+)\)', l).groups()
+                # node = LRMapNode(name, to_left, to_right)
+                nodes[name] = {'L': to_left, 'R': to_right}  # node
+
+        return lr_pattern, nodes
+
+
+class AOCGalaxyMapParser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+
+
+class AOCCommaSeparatedParser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        cs_strings = []
+        for l in lines:
+            cs_strings.extend(l.split(','))
+
+        return [s for s in cs_strings if s != '\n']
 
 
 class DummyAOCInputParser(AOCInputParser):

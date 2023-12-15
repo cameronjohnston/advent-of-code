@@ -336,3 +336,30 @@ class PlayingCard:
         return {'joker': 1, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
 
 
+@dataclass
+class LRMapNode:
+    name: str
+    to_left: str
+    to_right: str
+
+
+@dataclass
+class AsciiHashChar:
+    starting_value: int
+    char: str
+
+    def get_result_value(self):
+        res = self.starting_value
+        res += ord(self.char)
+        res *= 17
+        res = res % 256
+        return res
+
+
+# @dataclass
+# class Galaxy:
+
+
+
+
+
