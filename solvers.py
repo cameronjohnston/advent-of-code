@@ -9,7 +9,7 @@ from parsers import (AOCInputParser, DummyAOCInputParser, AOCRGBGameParser
     , AOCEngineSchematicParser, AOCScratchCardParser, AOCAlmanacParser
     , AOCBoatRaceParser, AOCPokerHandParser, AOCLRNodeNetworkParser
     , AOCCommaSeparatedParser, AOC2023Day19Parser
-    , AOC2024Day1Parser
+    , AOC2024Day1Parser, AOC2024Day2Parser
 )
 from timer import timeit
 
@@ -412,35 +412,17 @@ class AOC2024Day1Solver(AOCSolver):
     def solve_part2(self, parsed):
         return parsed[0].similarity(parsed[1])
 
-    # def success_func(self, workflow, workflows, funcs=[]):
-    #     # func =
-    #     for c in workflow.conditions:
-    #         # Search for any possible paths to acceptance from this workflow
-    #         for func in funcs:
-    #
 
-        # Possible paths to acceptance:
-        # A -> accepted
-        # A -> B -> accepted
-        # A -> C -> accepted
-        # A -> B -> C -> accepted
-        # A -> C -> B -> accepted
+class AOC2024Day2Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        safe_reports = [lr for lr in parsed if lr.is_safe()]
+        return len(safe_reports)
 
-        # {
-        #     'in': {
-        #         1: False
-        #         2: True
-        #         ...
-        #         256000000000000: False
-        #     },
-        #     'xyz': {
-        #         1: True
-        #         2: False
-        #         ...
-        #         256000000000000: True
-        #     }
-        # }
-
+    @timeit
+    def solve_part2(self, parsed):
+        safe_reports = [lr for lr in parsed if lr.is_safe_with_one_removal()]
+        return len(safe_reports)
 
 
 
@@ -462,6 +444,7 @@ AOC_SOLVERS = {
         19: AOC2023Day19Solver(AOC2023Day19Parser(2023, 19)),
     },
     2024: {
-        1: AOC2024Day1Solver(AOC2024Day1Parser(2024, 1))
+        1: AOC2024Day1Solver(AOC2024Day1Parser(2024, 1)),
+        2: AOC2024Day2Solver(AOC2024Day2Parser(2024, 2)),
     },
 }

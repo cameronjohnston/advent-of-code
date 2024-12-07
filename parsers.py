@@ -9,7 +9,7 @@ from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
     , ScratchCard, AlmanacMap, AlmanacMapRange, Range, BoatRace
     , PokerHand, PokerHandWithJackAsJoker, LRMapNode
     , MachinePart, MachineWorkflow, MachineWorkflowCondition
-    , HistorianList
+    , HistorianList, LevelReport
 )
 
 @dataclass
@@ -327,8 +327,19 @@ class AOC2024Day1Parser(AOCInputParser):
         return lists
 
 
+class AOC2024Day2Parser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        level_reports = []
+        for l in lines:
+            # Space-delimited - split into (string) values first:
+            str_vals = l.split()
 
+            # Now get the int values and create a LevelReport
+            int_vals = [int(v) for v in str_vals]
+            level_reports.append(LevelReport(int_vals))
 
+        return level_reports
 
 
 

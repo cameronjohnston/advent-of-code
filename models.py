@@ -1,5 +1,6 @@
 
 from dataclasses import dataclass, field
+from enum import Enum
 import operator
 from typing import List, Tuple
 
@@ -454,6 +455,50 @@ class HistorianList:
             res += loc_id * other.location_ids.count(loc_id)
 
         return res
+
+
+LevelReportDirection = Enum('LevelReportDirection', 'UNKNOWN INCREASING DECREASING')
+
+@dataclass
+class LevelReport:
+    levels: List[int] = field(default_factory=list)
+
+    def is_safe(self):
+        # Initialize direction
+        direction = LevelReportDirection.UNKNOWN
+
+        for i in range(len(self.levels)-1):
+            current_level, next_level = self.levels[i], self.levels[i+1]
+
+            # Check abs difference
+            if not 0 < abs(current_level - next_level) < 4:
+                return False
+
+            # Check/assign direction
+            supposed_direction = LevelReportDirection.DECREASING if current_level > next_level else LevelReportDirection.INCREASING
+            if direction == LevelReportDirection.UNKNOWN:
+                direction = supposed_direction
+            elif direction != supposed_direction:
+                return False
+
+        # If we made it here, all good...
+        print(f'Safe: {self.levels}')
+        return True
+
+    def is_safe_with_one_removal(self):
+        if self.is_safe():
+            return True
+        else:
+            # Brute force lol - try removing every one
+            # The proper way to do this would be some kind of exception/return value to detect which is the "bad" level
+            # TODO: do more elegantly?
+            for i in range(len(self.levels)):
+                new_levels = [l for j, l in enumerate(self.levels) if i != j]
+                if LevelReport(new_levels).is_safe():
+                    return True
+
+        # If we made it here... all possible removals still are unsafe:
+        return False
 
 
 # @dataclass
