@@ -8,6 +8,8 @@ from exceptions import ColourNotRecognizedException
 from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
     , ScratchCard, AlmanacMap, AlmanacMapRange, Range, BoatRace
     , PokerHand, PokerHandWithJackAsJoker, LRMapNode
+    , MachinePart, MachineWorkflow, MachineWorkflowCondition
+    , HistorianList
 )
 
 @dataclass
@@ -267,6 +269,67 @@ class AOCCommaSeparatedParser(AOCInputParser):
             cs_strings.extend(l.split(','))
 
         return [s for s in cs_strings if s != '\n']
+
+#
+# class AOC2023Day18Parser(AOCInputParser):
+#     def parse(self, input_file: Union[str, None] = None):
+#         lines = super().parse(input_file)
+#         for l in lines:
+#             direction, length, colour = l.split(' ')
+
+class AOC2023Day19Parser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        workflows = {}
+        parts = []
+        for l in lines:
+            workflow_re = re.match(r'([a-z]+){([^}]*)}', l)
+            if workflow_re:
+                name, expressions_str = workflow_re.groups()
+                expressions = expressions_str.split(',')
+                conditions = []
+                for expr in expressions:
+                    if ':' not in expr:
+                        # Assume this is the default destination
+                        conditions.append(MachineWorkflowCondition('x', '', 0, expr))
+                        break
+                    comparison, target = expr.split(':')
+                    part_metric, op_str, rhs = re.match(r'(\w+)([<>]{1})(\d+)', comparison).groups()
+                    conditions.append(MachineWorkflowCondition(part_metric, op_str, int(rhs), target))
+                workflow = MachineWorkflow(name, conditions)
+                workflows[name] = workflow
+
+            part_re = re.match(r'{([^}]*)}', l)
+            if part_re:
+                scores_str = part_re.groups()[0]
+                scores = {s.split('=')[0]: int(s.split('=')[1]) for s in scores_str.split(',')}
+                part = MachinePart(scores)
+                parts.append(part)
+
+        return workflows, parts
+
+
+class AOC2023Day24Parser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+
+class AOC2024Day1Parser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None):
+        lines = super().parse(input_file)
+        lists = (HistorianList(), HistorianList())
+
+        for l in lines:
+            # Lines should be of the form: 123 456, where 123 and 456 are location IDs
+            locations = re.match(r'([\d]+)[ ]+([\d]+)', l).groups()
+            lists[0].location_ids.append(int(locations[0]))
+            lists[1].location_ids.append(int(locations[1]))
+
+        return lists
+
+
+
+
+
 
 
 class DummyAOCInputParser(AOCInputParser):

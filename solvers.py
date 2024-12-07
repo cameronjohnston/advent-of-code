@@ -8,7 +8,8 @@ from models import Digit, Range, AlmanacMapRange, AsciiHashChar
 from parsers import (AOCInputParser, DummyAOCInputParser, AOCRGBGameParser
     , AOCEngineSchematicParser, AOCScratchCardParser, AOCAlmanacParser
     , AOCBoatRaceParser, AOCPokerHandParser, AOCLRNodeNetworkParser
-    , AOCCommaSeparatedParser
+    , AOCCommaSeparatedParser, AOC2023Day19Parser
+    , AOC2024Day1Parser
 )
 from timer import timeit
 
@@ -389,6 +390,60 @@ class AOC2023Day15Solver(AOCSolver):
         return total
 
 
+class AOC2023Day19Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        workflows, parts = parsed[0], parsed[1]
+
+        total = 0
+        for p in parts:
+            if p.is_accepted(workflows):
+                print(f'Accepted {p} {p.scores_sum}')
+                total += p.scores_sum
+
+        return total
+
+class AOC2024Day1Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        return parsed[0] - parsed[1]
+
+    @timeit
+    def solve_part2(self, parsed):
+        return parsed[0].similarity(parsed[1])
+
+    # def success_func(self, workflow, workflows, funcs=[]):
+    #     # func =
+    #     for c in workflow.conditions:
+    #         # Search for any possible paths to acceptance from this workflow
+    #         for func in funcs:
+    #
+
+        # Possible paths to acceptance:
+        # A -> accepted
+        # A -> B -> accepted
+        # A -> C -> accepted
+        # A -> B -> C -> accepted
+        # A -> C -> B -> accepted
+
+        # {
+        #     'in': {
+        #         1: False
+        #         2: True
+        #         ...
+        #         256000000000000: False
+        #     },
+        #     'xyz': {
+        #         1: True
+        #         2: False
+        #         ...
+        #         256000000000000: True
+        #     }
+        # }
+
+
+
+
 AOC_SOLVERS = {
     2022: {
         32: StraightThruAOCSolver(AOCInputParser(2022, 32)),
@@ -404,5 +459,9 @@ AOC_SOLVERS = {
         7: AOC2023Day7Solver(AOCPokerHandParser(2023, 7)),
         8: AOC2023Day8Solver(AOCLRNodeNetworkParser(2023, 8)),
         15: AOC2023Day15Solver(AOCCommaSeparatedParser(2023, 15)),
-    }
+        19: AOC2023Day19Solver(AOC2023Day19Parser(2023, 19)),
+    },
+    2024: {
+        1: AOC2024Day1Solver(AOC2024Day1Parser(2024, 1))
+    },
 }

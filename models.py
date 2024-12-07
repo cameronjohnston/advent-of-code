@@ -1,5 +1,6 @@
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import operator
 from typing import List, Tuple
 
 
@@ -353,6 +354,105 @@ class AsciiHashChar:
         res += ord(self.char)
         res *= 17
         res = res % 256
+        return res
+
+
+@dataclass
+class MachinePart:
+    scores: dict
+
+    def __post_init__(self):
+        values = [v for _, v in self.scores.items()]
+        self.scores_sum = sum(values)
+
+    def is_accepted(self, workflows):
+        curr_workflow = workflows['in']
+        while True:
+            found = False  # have we found a true condition yet for this workflow?
+            for c in curr_workflow.conditions:
+                if c.is_true(self):
+                    if c.target == 'R':
+                        return False
+                    elif c.target == 'A':
+                        return True
+                    else:
+                        found = True
+                        curr_workflow = workflows[c.target]
+                        break
+            # If we got here, either all conditions are False, or we found the True one:
+            if not found:
+                if curr_workflow.default_target == 'R':
+                    return False
+                elif curr_workflow.default_target == 'A':
+                    return True
+                else:
+                    curr_workflow = workflows[curr_workflow.default_target]
+
+@dataclass
+class MachineWorkflowCondition:
+    part_metric: str
+    operation_str: str
+    rhs: int
+    target: str
+
+    def __post_init__(self):
+        ops = {
+            '<': operator.lt,
+            '<=': operator.le,
+            '==': operator.eq,
+            '!=': operator.ne,
+            '>=': operator.ge,
+            '>': operator.gt,
+            '': lambda x, y: True
+        }
+        self.operation = ops.get(self.operation_str)
+
+    def is_true(self, machine_part: MachinePart):
+        lhs = machine_part.scores[self.part_metric]
+        return self.operation(lhs, self.rhs)
+
+@dataclass
+class MachineWorkflow:
+    name: str
+    conditions: List[MachineWorkflowCondition]
+
+    # def success_conditions(self):
+
+
+@dataclass
+class HailStone:
+    start_pos: Tuple[int, int, int]
+    velocity: Tuple[int, int, int]
+
+    def intersection(self, other, axis=(True, True, False)):
+        pass
+
+
+@dataclass
+class HistorianList:
+    location_ids: List[int] = field(default_factory=list)
+
+    def __sub__(self, other):
+        res = 0
+
+        # First, sort them, as then we can pair the items and get the total of abs differences:
+        self.location_ids.sort()
+        other.location_ids.sort()
+
+        for i, loc_id in enumerate(self.location_ids):
+            res += abs(loc_id - other.location_ids[i])
+            print(f'{i}: {loc_id} {other.location_ids[i]} -> {res}')
+
+        return res
+
+    def similarity(self, other):
+        res = 0
+
+        # Loop thru
+        for loc_id in self.location_ids:
+            # Add similarity score = count * value
+            res += loc_id * other.location_ids.count(loc_id)
+
         return res
 
 
