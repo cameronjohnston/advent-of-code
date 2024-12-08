@@ -2,14 +2,14 @@
 from dataclasses import dataclass
 import os
 import re
-from typing import Union
+from typing import List, Union
 
 from exceptions import ColourNotRecognizedException
 from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
     , ScratchCard, AlmanacMap, AlmanacMapRange, Range, BoatRace
     , PokerHand, PokerHandWithJackAsJoker, LRMapNode
     , MachinePart, MachineWorkflow, MachineWorkflowCondition
-    , HistorianList, LevelReport
+    , HistorianList, LevelReport, MultiplyExpr
 )
 
 @dataclass
@@ -342,6 +342,26 @@ class AOC2024Day2Parser(AOCInputParser):
         return level_reports
 
 
+class AOC2024Day3Parser(AOCInputParser):
+    def parse(self, input_file: Union[str, None] = None) -> List[MultiplyExpr]:
+        lines = super().parse(input_file)
+        multiply_expressions = []
+
+        # For part 2: by default, we start as "do"
+        should_do = True
+
+        for l in lines:
+            # groups = re.findall(r'mul\(([\d]+),([\d]+)\)|([do\(\)])|([don\'t])', l)
+            groups = re.findall(r'mul\(([\d]+),([\d]+)\)|(do\(\))|(don\'t\(\))', l)
+            for g in groups:
+                if g[2]:  # Indicates a "do()"
+                    should_do = True
+                elif g[3]:  # Indicates a "don't()"
+                    should_do = False
+                elif g[0]:  # Indicates a "mul(x,y)"
+                    multiply_expressions.append(MultiplyExpr([int(g[0]), int(g[1])], should_do))
+
+        return multiply_expressions
 
 class DummyAOCInputParser(AOCInputParser):
     def parse(self, input_file: Union[str,None]=None):

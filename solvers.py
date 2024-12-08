@@ -9,7 +9,7 @@ from parsers import (AOCInputParser, DummyAOCInputParser, AOCRGBGameParser
     , AOCEngineSchematicParser, AOCScratchCardParser, AOCAlmanacParser
     , AOCBoatRaceParser, AOCPokerHandParser, AOCLRNodeNetworkParser
     , AOCCommaSeparatedParser, AOC2023Day19Parser
-    , AOC2024Day1Parser, AOC2024Day2Parser
+    , AOC2024Day1Parser, AOC2024Day2Parser, AOC2024Day3Parser
 )
 from timer import timeit
 
@@ -425,6 +425,23 @@ class AOC2024Day2Solver(AOCSolver):
         return len(safe_reports)
 
 
+class AOC2024Day3Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        res = 0
+        for me in parsed:
+            res += me.result()
+
+        return res
+
+    @timeit
+    def solve_part2(self, parsed):
+        res = 0
+        for me in parsed:
+            if me.should_do:
+                res += me.result()
+
+        return res
 
 AOC_SOLVERS = {
     2022: {
@@ -446,5 +463,6 @@ AOC_SOLVERS = {
     2024: {
         1: AOC2024Day1Solver(AOC2024Day1Parser(2024, 1)),
         2: AOC2024Day2Solver(AOC2024Day2Parser(2024, 2)),
+        3: AOC2024Day3Solver(AOC2024Day3Parser(2024, 3)),
     },
 }

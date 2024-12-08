@@ -501,6 +501,19 @@ class LevelReport:
         return False
 
 
+@dataclass
+class MultiplyExpr:
+    vals: List[int] = field(default_factory=list)
+    should_do: bool = True
+
+    def result(self):
+        res = 1
+        for v in self.vals:
+            res *= v
+
+        return res
+
+
 # @dataclass
 # class Galaxy:
 
