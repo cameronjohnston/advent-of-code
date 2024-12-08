@@ -4,12 +4,12 @@ from dataclasses import dataclass
 import time
 import traceback
 
-from models import Digit, Range, AlmanacMapRange, AsciiHashChar
+from models import Digit, Range, AlmanacMapRange, AsciiHashChar, NeighbouringDirection
 from parsers import (AOCInputParser, DummyAOCInputParser, AOCRGBGameParser
     , AOCEngineSchematicParser, AOCScratchCardParser, AOCAlmanacParser
     , AOCBoatRaceParser, AOCPokerHandParser, AOCLRNodeNetworkParser
     , AOCCommaSeparatedParser, AOC2023Day19Parser
-    , AOC2024Day1Parser, AOC2024Day2Parser, AOC2024Day3Parser
+    , AOC2024Day1Parser, AOC2024Day2Parser, AOC2024Day3Parser, AOC2024Day4Parser
 )
 from timer import timeit
 
@@ -443,6 +443,52 @@ class AOC2024Day3Solver(AOCSolver):
 
         return res
 
+class AOC2024Day4Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed):
+        res = 0
+        special_word = 'XMAS'
+
+        for i, c in enumerate(parsed):
+            if c.char == special_word[0]:
+                for direction, neighbour in c.neighbours.items():
+                    if neighbour[:3] == special_word[1:]:
+                        res += 1
+
+        return res
+
+    @timeit
+    def solve_part2(self, parsed):
+        res = 0
+
+        for i, c in enumerate(parsed):
+            if c.char == 'A':
+                # Look for A's in the middle, with neighbouring M's and S's
+                try:
+                    al, ar, br, bl = (
+                        c.neighbours[NeighbouringDirection.ABOVE_LEFT][0],
+                        c.neighbours[NeighbouringDirection.ABOVE_RIGHT][0],
+                        c.neighbours[NeighbouringDirection.BELOW_RIGHT][0],
+                        c.neighbours[NeighbouringDirection.BELOW_LEFT][0],
+                    )
+                    if (al in 'MS'
+                            and ar in 'MS'
+                            and br in 'MS'
+                            and bl in 'MS'
+                    ):
+                        if al != br and ar != bl:
+                            # If we made it here, both diagonals are not matching,
+                            # therefore they must spell "MAS" (using the "A" which we already know is in the middle).
+                            res += 1
+
+                except IndexError as e:
+                    # There may not be any neighbours in a given direction.
+                    # If this is the case, there must not be a "X-MAS" centered at this "A".
+                    # In such cases, we want to ignore this "A" and move on:
+                    pass
+
+        return res
+
 AOC_SOLVERS = {
     2022: {
         32: StraightThruAOCSolver(AOCInputParser(2022, 32)),
@@ -464,5 +510,6 @@ AOC_SOLVERS = {
         1: AOC2024Day1Solver(AOC2024Day1Parser(2024, 1)),
         2: AOC2024Day2Solver(AOC2024Day2Parser(2024, 2)),
         3: AOC2024Day3Solver(AOC2024Day3Parser(2024, 3)),
+        4: AOC2024Day4Solver(AOC2024Day4Parser(2024, 4)),
     },
 }

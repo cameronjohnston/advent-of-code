@@ -2,7 +2,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 import operator
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 
 
@@ -514,8 +514,13 @@ class MultiplyExpr:
         return res
 
 
-# @dataclass
-# class Galaxy:
+NeighbouringDirection = Enum('NeighbouringDirection', 'ABOVE_LEFT ABOVE ABOVE_RIGHT RIGHT BELOW_RIGHT BELOW BELOW_LEFT LEFT')
+
+@dataclass
+class CharWithNeighbours:
+    char: str
+    neighbours: Dict[NeighbouringDirection, str] = field(default_factory=dict)
+
 
 
 

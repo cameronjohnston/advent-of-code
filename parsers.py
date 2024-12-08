@@ -9,8 +9,9 @@ from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
     , ScratchCard, AlmanacMap, AlmanacMapRange, Range, BoatRace
     , PokerHand, PokerHandWithJackAsJoker, LRMapNode
     , MachinePart, MachineWorkflow, MachineWorkflowCondition
-    , HistorianList, LevelReport, MultiplyExpr
+    , HistorianList, LevelReport, MultiplyExpr, NeighbouringDirection, CharWithNeighbours
 )
+from timer import timeit
 
 @dataclass
 class InputFileFinder:
@@ -59,7 +60,7 @@ class AOCInputParser:
         if input_file is None:
             input_file = InputFileFinder(year=self.year, day=self.day).get()
         f = open(input_file, 'r')
-        lines = f.readlines()
+        lines = f.read().splitlines()
         return lines
 
 class AOCRGBGameParser(AOCInputParser):
@@ -362,6 +363,55 @@ class AOC2024Day3Parser(AOCInputParser):
                     multiply_expressions.append(MultiplyExpr([int(g[0]), int(g[1])], should_do))
 
         return multiply_expressions
+
+
+class AOC2024Day4Parser(AOCInputParser):
+    @timeit
+    def parse(self, input_file: Union[str, None] = None) -> List[CharWithNeighbours]:
+        lines = super().parse(input_file)
+
+        # Initialize, then populate, the characters
+        chars = []
+        for i, l in enumerate(lines):
+            for j, c in enumerate(l):
+                # Populating this dict is messy... but... the result is glorious:
+                # A dict with direction as the keys and a str of all neighbours in that direction as the values.
+                # This shall provide smooth sailing later, hopefully...
+                neighbours = {
+                    NeighbouringDirection.ABOVE_LEFT: ''.join([
+                        lines[i2][j2] if abs(i2-i) == abs(j2-j) else ''
+                        for i2 in range(i-1, -1, -1) for j2 in range(j-1, -1, -1)
+                    ]),
+                    NeighbouringDirection.ABOVE: ''.join([
+                        lines[i2][j] for i2 in range(i-1, -1, -1)
+                    ]),
+                    NeighbouringDirection.ABOVE_RIGHT: ''.join([
+                        lines[i2][j2] if abs(i2-i) == abs(j2-j) else ''
+                        for i2 in range(i-1, -1, -1) for j2 in range(j+1, len(l))
+                    ]),
+                    NeighbouringDirection.RIGHT: ''.join([
+                        l[j2] for j2 in range(j+1, len(l))
+                    ]),
+                    NeighbouringDirection.BELOW_RIGHT: (''.join([
+                        lines[i2][j2] if abs(i2-i) == abs(j2-j) else ''
+                        for i2 in range(i+1, len(lines)) for j2 in range(j+1, len(lines[i2]))
+                    ])) if i < len(lines) and j < len(l) else '',
+                    NeighbouringDirection.BELOW: ''.join([
+                        lines[i2][j] for i2 in range(i+1, len(lines))
+                    ]),
+                    NeighbouringDirection.BELOW_LEFT: ''.join([
+                        lines[i2][j2] if abs(i2-i) == abs(j2-j) else ''
+                        for i2 in range(i+1, len(lines)) for j2 in range(j-1, -1, -1)
+                    ]),
+                    NeighbouringDirection.LEFT: ''.join([
+                        l[j2] for j2 in range(j-1, -1, -1)
+                    ]),
+                }
+
+                # Now, the neighbours are ready. Append the char with its neighbours:
+                chars.append(CharWithNeighbours(c, neighbours))
+
+        return chars
 
 class DummyAOCInputParser(AOCInputParser):
     def parse(self, input_file: Union[str,None]=None):
