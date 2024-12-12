@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 import os
 import re
-from typing import List, Union
+from typing import Dict, List, Tuple, Union
 
 from exceptions import ColourNotRecognizedException
 from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
@@ -10,6 +10,7 @@ from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
     , PokerHand, PokerHandWithJackAsJoker, LRMapNode
     , MachinePart, MachineWorkflow, MachineWorkflowCondition
     , HistorianList, LevelReport, MultiplyExpr, NeighbouringDirection, CharWithNeighbours
+    , UpdateWithPages
 )
 from timer import timeit
 
@@ -412,6 +413,33 @@ class AOC2024Day4Parser(AOCInputParser):
                 chars.append(CharWithNeighbours(c, neighbours))
 
         return chars
+
+
+class AOC2024Day5Parser(AOCInputParser):
+    @timeit
+    def parse(self, input_file: Union[str, None] = None) -> Tuple[Dict[int, List[int]], List[UpdateWithPages]]:
+        lines = super().parse(input_file)
+
+        # Track the rules and updates
+        rules = {}
+        updates = []
+        for l in lines:
+            if '|' in l:
+                before, after = int(l.split('|')[0]), int(l.split('|')[1])
+
+                if before in rules:
+                    # Append to list if there is anything there:
+                    rules[before].append(after)
+                else:
+                    # If not, add it as the only item:
+                    rules[before] = [after]
+
+            elif ',' in l:
+                page_numbers = [int(n) for n in l.split(',')]
+                updates.append(UpdateWithPages(page_numbers))
+
+        return rules, updates
+
 
 class DummyAOCInputParser(AOCInputParser):
     def parse(self, input_file: Union[str,None]=None):

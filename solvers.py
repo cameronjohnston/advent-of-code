@@ -3,13 +3,14 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import time
 import traceback
+from typing import Dict, List, Tuple, Union
 
-from models import Digit, Range, AlmanacMapRange, AsciiHashChar, NeighbouringDirection
+from models import Digit, Range, AlmanacMapRange, AsciiHashChar, NeighbouringDirection, UpdateWithPages
 from parsers import (AOCInputParser, DummyAOCInputParser, AOCRGBGameParser
     , AOCEngineSchematicParser, AOCScratchCardParser, AOCAlmanacParser
     , AOCBoatRaceParser, AOCPokerHandParser, AOCLRNodeNetworkParser
     , AOCCommaSeparatedParser, AOC2023Day19Parser
-    , AOC2024Day1Parser, AOC2024Day2Parser, AOC2024Day3Parser, AOC2024Day4Parser
+    , AOC2024Day1Parser, AOC2024Day2Parser, AOC2024Day3Parser, AOC2024Day4Parser, AOC2024Day5Parser
 )
 from timer import timeit
 
@@ -489,6 +490,26 @@ class AOC2024Day4Solver(AOCSolver):
 
         return res
 
+class AOC2024Day5Solver(AOCSolver):
+    @timeit
+    def solve_part1(self, parsed: Tuple[Dict[int, List[int]], List[UpdateWithPages]]) -> int:
+        valid_updates = [u for u in parsed[1] if u.is_valid(parsed[0])]
+        middle_values = [u.middle() for u in valid_updates]
+        return sum(middle_values)
+
+    @timeit
+    def solve_part2(self, parsed: Tuple[Dict[int, List[int]], List[UpdateWithPages]]) -> int:
+        res = 0
+
+        invalid_updates = [u for u in parsed[1] if not u.is_valid(parsed[0])]
+        for u in invalid_updates:
+            u.make_valid(parsed[0])
+            res += u.middle()
+
+        return res
+
+
+
 AOC_SOLVERS = {
     2022: {
         32: StraightThruAOCSolver(AOCInputParser(2022, 32)),
@@ -511,5 +532,6 @@ AOC_SOLVERS = {
         2: AOC2024Day2Solver(AOC2024Day2Parser(2024, 2)),
         3: AOC2024Day3Solver(AOC2024Day3Parser(2024, 3)),
         4: AOC2024Day4Solver(AOC2024Day4Parser(2024, 4)),
+        5: AOC2024Day5Solver(AOC2024Day5Parser(2024, 5)),
     },
 }

@@ -522,6 +522,53 @@ class CharWithNeighbours:
     neighbours: Dict[NeighbouringDirection, str] = field(default_factory=dict)
 
 
+@dataclass
+class UpdateWithPages:
+    pages: List[int]
+
+    def is_valid(self, rules: Dict[int, List[int]]):
+        # Rules should be of the form: {<page_num>: [num1, num2, ...]},
+        # where num1 and num2 are not allowed to come before page_num.
+
+        # Check all the rules
+        prev = []
+        for p in self.pages:
+            # Check if any page numbers before this page are disallowed:
+            if len([n for n in prev if n in rules.get(p, [])]):
+                return False
+            else:
+                prev.append(p)
+
+        # If we made it here, all good:
+        return True
+
+    def make_valid(self, rules: Dict[int, List[int]]):
+        # Rules should be of the form: {<page_num>: [num1, num2, ...]},
+        # where num1 and num2 are not allowed to come before page_num.
+
+        for i in range(len(self.pages)):
+            # Check if any page numbers before this page are disallowed:
+            for j in range(i):
+                p = self.pages[i]
+                prev = [m for k, m in enumerate(self.pages) if k < i]
+                disallowed = rules.get(p, [])  # These numbers must not come before p
+                if prev[j] in disallowed:
+                    # Currently invalid! Need to correct it and continue trying:
+                    self.pages[j], self.pages[len(prev)] = self.pages[len(prev)], self.pages[j]
+
+                    # Now, if this page is valid, return as we are done:
+                    if self.is_valid(rules):
+                        return
+
+                j += 1
+
+            i += 1
+
+    def middle(self):
+        # Get the middle value
+        return self.pages[int(len(self.pages) / 2)]
+
+
 
 
 
