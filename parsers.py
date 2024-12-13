@@ -10,7 +10,7 @@ from models import (RGBGame, EnginePartCandidate, EngineSchematicSymbol
     , PokerHand, PokerHandWithJackAsJoker, LRMapNode
     , MachinePart, MachineWorkflow, MachineWorkflowCondition
     , HistorianList, LevelReport, MultiplyExpr, NeighbouringDirection, CharWithNeighbours
-    , UpdateWithPages
+    , UpdateWithPages, GuardMapSpot
 )
 from timer import timeit
 
@@ -440,6 +440,28 @@ class AOC2024Day5Parser(AOCInputParser):
 
         return rules, updates
 
+class AOC2024Day6Parser(AOCInputParser):
+    @timeit
+    def parse(self, input_file: Union[str, None] = None) -> Tuple[List[List[GuardMapSpot]], Tuple[int, int]]:
+        lines = super().parse(input_file)
+
+        guard_map = [[]]
+        for i, l in enumerate(lines):
+            guard_map.append([])
+            for j, c in enumerate(l):
+                match c:
+                    case '^':
+                        guard_map[i].append(GuardMapSpot.EMPTY)
+                        starting_spot = (i, j)
+                    case '.':
+                        guard_map[i].append(GuardMapSpot.EMPTY)
+                    case '#':
+                        guard_map[i].append(GuardMapSpot.OBSTACLE)
+
+        # For some reason, there is an empty array appended to the end...
+        # Remove any empty arrays:
+        guard_map = [g for g in guard_map if len(g)]
+        return guard_map, starting_spot
 
 class DummyAOCInputParser(AOCInputParser):
     def parse(self, input_file: Union[str,None]=None):

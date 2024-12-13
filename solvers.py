@@ -1,16 +1,21 @@
 
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from dataclasses import dataclass
 import time
 import traceback
 from typing import Dict, List, Tuple, Union
 
-from models import Digit, Range, AlmanacMapRange, AsciiHashChar, NeighbouringDirection, UpdateWithPages
+from models import (
+    Digit, Range, AlmanacMapRange, AsciiHashChar, NeighbouringDirection, UpdateWithPages,
+    GuardMapSpot, GuardDirection
+)
 from parsers import (AOCInputParser, DummyAOCInputParser, AOCRGBGameParser
     , AOCEngineSchematicParser, AOCScratchCardParser, AOCAlmanacParser
     , AOCBoatRaceParser, AOCPokerHandParser, AOCLRNodeNetworkParser
     , AOCCommaSeparatedParser, AOC2023Day19Parser
     , AOC2024Day1Parser, AOC2024Day2Parser, AOC2024Day3Parser, AOC2024Day4Parser, AOC2024Day5Parser
+    , AOC2024Day6Parser
 )
 from timer import timeit
 
@@ -508,6 +513,91 @@ class AOC2024Day5Solver(AOCSolver):
 
         return res
 
+class AOC2024Day6Solver(AOCSolver):
+
+    def get_locations_been_to(self, parsed: Tuple[List[List[GuardMapSpot]], Tuple[int, int]]) -> List[Tuple[int, int]]:
+        current_direction = GuardDirection('UP')
+        guard_map, current_location = parsed[0], parsed[1]
+        locations_been_to = []
+
+        while True:
+            next_location = (current_location[0] + current_direction.y_increment
+                                    , current_location[1] + current_direction.x_increment)
+            locations_been_to.append(current_location)
+            if 0 <= next_location[0] < len(guard_map) and 0 <= next_location[1] < len(guard_map[0]):
+                if guard_map[next_location[0]][next_location[1]] == GuardMapSpot.OBSTACLE:
+                    current_direction = GuardDirection(current_direction.next_direction)
+                else:
+                    current_location = next_location
+            else:
+                return set(locations_been_to)
+
+
+    @timeit
+    def solve_part1(self, parsed: Tuple[List[List[GuardMapSpot]], Tuple[int, int]]) -> int:
+        return len(self.get_locations_been_to(parsed))
+
+    @timeit
+    def solve_part2(self, parsed: Tuple[List[List[GuardMapSpot]], Tuple[int, int]]) -> int:
+        guard_map_orig, starting_location = parsed[0], parsed[1]
+        res = 0
+
+        # Efficiency gain: we only need to test the location which the guard goes to (from original map):
+        locations_been_to = self.get_locations_been_to(parsed)
+        print(len(locations_been_to))
+
+        # Check if each new obstruction candidate would cause an infinite loop
+        for i in range(len(guard_map_orig)):
+            print(f'Starting row {i}')
+            for j in range(len(guard_map_orig[i])):
+                # print(f'Starting char {j}')
+                if guard_map_orig[i][j] != GuardMapSpot.EMPTY or (i, j) == starting_location:
+                    # Either non-empty spot or starting spot or the guard does not go here
+                    # -> not eligible for a new obstacle candidate
+                    continue
+
+                if (i, j) in locations_been_to:
+                    continue
+
+                # Create a copy, but modify the one candidate spot
+                guard_map = [g.copy() for g in guard_map_orig.copy()]  # guard_map_orig.deepcopy()
+                guard_map[i][j] = GuardMapSpot.OBSTACLE
+
+                # Initialize location & direction
+                locations_been_to = []
+                current_direction = GuardDirection('UP')
+                current_location = starting_location
+
+                # Determine whether the guard still walks off the map, or it creates an infinite loop:
+                while True:
+                    # Check if this has created an infinite loop,
+                    # i.e. if the guard has already been to this same location in the same direction:
+                    if (current_location, current_direction) in locations_been_to:
+                        if (current_location, current_direction) != (starting_location, GuardDirection('UP')):
+                            # Infinite loop discovered!
+                            print(f'Infinite loop created by making {i}, {j} an obstacle! {current_location} {current_direction.direction}')
+                            res += 1
+                            break
+
+                    locations_been_to.append((current_location, current_direction))
+                    next_location = (current_location[0] + current_direction.y_increment
+                                            , current_location[1] + current_direction.x_increment)
+                    if 0 <= next_location[0] < len(guard_map) and 0 <= next_location[1] < len(guard_map[0]):
+                        if guard_map[next_location[0]][next_location[1]] == GuardMapSpot.OBSTACLE:
+                            current_direction = GuardDirection(current_direction.next_direction)
+                        else:
+                            current_location = next_location
+                    else:
+                        # Guard has walked off the map -> not an infinite loop
+                        break
+
+                    # time.sleep(1)
+
+        return res
+
+
+
+
 
 
 AOC_SOLVERS = {
@@ -533,5 +623,6 @@ AOC_SOLVERS = {
         3: AOC2024Day3Solver(AOC2024Day3Parser(2024, 3)),
         4: AOC2024Day4Solver(AOC2024Day4Parser(2024, 4)),
         5: AOC2024Day5Solver(AOC2024Day5Parser(2024, 5)),
+        6: AOC2024Day6Solver(AOC2024Day6Parser(2024, 6)),
     },
 }

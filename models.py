@@ -569,7 +569,21 @@ class UpdateWithPages:
         return self.pages[int(len(self.pages) / 2)]
 
 
+GuardMapSpot = Enum('GuardMapSpot', 'OBSTACLE EMPTY')
 
+@dataclass
+class GuardDirection:
+    direction: str
 
+    def __post_init__(self):
+        match self.direction:
+            case 'UP':
+                self.next_direction, self.x_increment, self.y_increment = 'RIGHT', 0, -1
+            case 'RIGHT':
+                self.next_direction, self.x_increment, self.y_increment = 'DOWN', 1, 0
+            case 'DOWN':
+                self.next_direction, self.x_increment, self.y_increment = 'LEFT', 0, 1
+            case 'LEFT':
+                self.next_direction, self.x_increment, self.y_increment = 'UP', -1, 0
 
 
